@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>급여 구조 세금 비교 시뮬레이터</title>
+<style>
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f4f0;
+  --color-background-tertiary: #eae9e5;
+  --color-background-info: #E6F1FB;
+  --color-background-success: #EAF3DE;
+  --color-background-danger: #FCEBEB;
+  --color-background-warning: #FAEEDA;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666663;
+  --color-text-tertiary: #999996;
+  --color-text-info: #185FA5;
+  --color-text-success: #3B6D11;
+  --color-text-danger: #A32D2D;
+  --color-text-warning: #854F0B;
+  --color-border-tertiary: rgba(0,0,0,0.12);
+  --color-border-secondary: rgba(0,0,0,0.2);
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background-primary: #1a1a1a;
+    --color-background-secondary: #2a2a28;
+    --color-background-tertiary: #333330;
+    --color-background-info: #0C447C;
+    --color-background-success: #27500A;
+    --color-background-danger: #501313;
+    --color-background-warning: #412402;
+    --color-text-primary: #e8e8e5;
+    --color-text-secondary: #a0a09c;
+    --color-text-tertiary: #77776f;
+    --color-text-info: #85B7EB;
+    --color-text-success: #97C459;
+    --color-text-danger: #F09595;
+    --color-text-warning: #FAC775;
+    --color-border-tertiary: rgba(255,255,255,0.12);
+    --color-border-secondary: rgba(255,255,255,0.2);
+  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  background: var(--color-background-primary);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+h1 { font-size: 20px; font-weight: 500; margin-bottom: 0.25rem; }
+.page-sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1.25rem; }
+.lb { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 5px; font-weight: 500; }
+.row { display: flex; gap: 10px; margin-bottom: 10px; }
+.card {
+  flex: 1; background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md); padding: 0.8rem; min-width: 0; overflow: hidden;
+}
+.card h3 { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+.l { display: flex; justify-content: space-between; font-size: 11.5px; padding: 2px 0; gap: 4px; }
+.l span:last-child { white-space: nowrap; text-align: right; }
+.l.t { font-weight: 500; border-top: 0.5px solid var(--color-border-tertiary); margin-top: 3px; padding-top: 4px; }
+.l.st { font-weight: 500; }
+.l.ss { margin-top: 5px; padding-top: 4px; border-top: 0.5px dashed var(--color-border-tertiary); }
+.l.sec { font-size: 10px; color: var(--color-text-tertiary); }
+.sr { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sr label { font-size: 12px; color: var(--color-text-secondary); min-width: 125px; flex-shrink: 0; }
+.sr input[type=range] { flex: 1; min-width: 0; height: 4px; accent-color: var(--color-text-info); }
+.sr .v { font-size: 12px; font-weight: 500; min-width: 80px; text-align: right; flex-shrink: 0; }
+.sb {
+  border-radius: var(--border-radius-md); padding: 0.55rem 0.75rem;
+  text-align: center; font-weight: 500; font-size: 13.5px; margin-bottom: 0.75rem;
+}
+.sb-p { background: var(--color-background-success); color: var(--color-text-success); }
+.sb-n { background: var(--color-background-danger); color: var(--color-text-danger); }
+.mr { display: flex; gap: 6px; margin-bottom: 0.75rem; }
+.m { flex: 1; background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.5rem; text-align: center; }
+.m .ml { font-size: 9.5px; color: var(--color-text-secondary); }
+.m .mv { font-size: 15px; font-weight: 500; margin-top: 1px; }
+.sub { font-size: 10px; color: var(--color-text-tertiary); margin-top: -2px; margin-left: 133px; margin-bottom: 5px; }
+.adv-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px;
+  margin-bottom: 10px; padding: 10px 12px;
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary);
+}
+.adv-group { margin-bottom: 4px; }
+.agt { font-size: 10.5px; font-weight: 500; color: var(--color-text-tertiary); margin-bottom: 4px; letter-spacing: 0.3px; }
+.reset-btn {
+  font-size: 11px; color: var(--color-text-info); cursor: pointer;
+  border: none; background: none; font-family: inherit; padding: 2px 8px; border-radius: 4px; float: right;
+}
+.reset-btn:hover { background: var(--color-background-info); }
+.note { font-size: 10px; color: var(--color-text-tertiary); margin-top: 8px; line-height: 1.5; }
+.section-divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 12px 0; }
+@media (max-width: 600px) {
+  .row { flex-direction: column; }
+  .adv-grid { grid-template-columns: 1fr; }
+  .mr { flex-wrap: wrap; }
+  .m { min-width: calc(50% - 4px); }
+  .sr label { min-width: 100px; font-size: 11px; }
+  .sr .v { min-width: 65px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<h1>급여 구조 세금 비교 시뮬레이터</h1>
+<p class="page-sub">싱가폴 회사 → 한국 근로소득 vs 한국 법인 경유 비교</p>
+
+<div style="margin-bottom:8px">
+<p class="lb">기본 설정</p>
+<div class="sr"><label>연간 총급여</label><input type="range" min="8000" max="60000" step="1000" value="21000" id="gross"><span class="v" id="grV"></span></div>
+<div class="sub" id="grUsd"></div>
+<div class="sr"><label>대표 월급여 (Opt2)</label><input type="range" min="200" max="2000" step="50" value="800" id="salary"><span class="v" id="salV"></span></div>
+<div class="sr"><label>법인 경비 (연간)</label><input type="range" min="0" max="8000" step="100" value="2000" id="expense"><span class="v" id="expV"></span></div>
+<div class="sr"><label>배당 금액</label><input type="range" min="0" max="10000" step="100" value="0" id="divAmt"><span class="v" id="divV"></span></div>
+<div class="sub" id="divInfo"></div>
+</div>
+
+<div style="margin-bottom:12px">
+<p class="lb">고급 설정 (가정 조정) <button class="reset-btn" onclick="resetAdv()">초기화</button></p>
+<div class="adv-grid">
+  <div class="adv-group">
+    <div class="agt">환율 / 공제</div>
+    <div class="sr"><label>환율 (USD/KRW)</label><input type="range" min="1100" max="1700" step="10" value="1500" id="fx"><span class="v" id="fxV"></span></div>
+    <div class="sr"><label>인적공제</label><input type="range" min="150" max="1000" step="50" value="450" id="pd"><span class="v" id="pdV"></span></div>
+    <div class="sr"><label>기타 소득공제</label><input type="range" min="0" max="1000" step="50" value="200" id="od"><span class="v" id="odV"></span></div>
+    <div class="sr"><label>세액공제 합계</label><input type="range" min="0" max="500" step="10" value="125" id="tc"><span class="v" id="tcV"></span></div>
+  </div>
+  <div class="adv-group">
+    <div class="agt">법인 / 배당</div>
+    <div class="sr"><label>법인 기존 과표</label><input type="range" min="0" max="30000" step="1000" value="0" id="corpBase"><span class="v" id="cbV"></span></div>
+    <div class="sr"><label>종합과세 기준</label><input type="range" min="1000" max="5000" step="500" value="2000" id="finThresh"><span class="v" id="ftV"></span></div>
+    <div class="sr"><label>배당 Gross-up율</label><input type="range" min="0" max="20" step="1" value="11" id="gu"><span class="v" id="guV"></span></div>
+  </div>
+  <div class="adv-group">
+    <div class="agt">4대보험 (근로자 부담)</div>
+    <div class="sr"><label>국민연금</label><input type="range" min="4" max="7" step="0.25" value="4.75" id="npR"><span class="v" id="npV"></span></div>
+    <div class="sr"><label>건강보험</label><input type="range" min="3" max="5" step="0.05" value="3.595" id="hiR"><span class="v" id="hiV"></span></div>
+    <div class="sr"><label>장기요양 (건보대비)</label><input type="range" min="10" max="18" step="0.5" value="13.14" id="ltR"><span class="v" id="ltV"></span></div>
+    <div class="sr"><label>고용보험</label><input type="range" min="0.5" max="1.5" step="0.1" value="0.9" id="eiR"><span class="v" id="eiV"></span></div>
+  </div>
+  <div class="adv-group">
+    <div class="agt">4대보험 (사용자 부담 등)</div>
+    <div class="sr"><label>국민연금 상한</label><input type="range" min="500" max="900" step="10" value="637" id="npCap"><span class="v" id="ncV"></span></div>
+    <div class="sr"><label>고용안정 (사용자)</label><input type="range" min="0.15" max="0.85" step="0.05" value="0.25" id="empEi"><span class="v" id="eeV"></span></div>
+    <div class="sr"><label>산재보험 (사용자)</label><input type="range" min="0.3" max="3" step="0.1" value="0.7" id="empSi"><span class="v" id="esV"></span></div>
+  </div>
+</div>
+</div>
+
+<div class="mr">
+  <div class="m"><div class="ml">Opt1 총수령</div><div class="mv" id="m1"></div></div>
+  <div class="m"><div class="ml">Opt2 총수령+유보</div><div class="mv" id="m2"></div></div>
+  <div class="m"><div class="ml">절감액</div><div class="mv" id="m3"></div></div>
+  <div class="m"><div class="ml">실효세율</div><div class="mv" id="m4"></div></div>
+</div>
+
+<div id="savingsBar" class="sb sb-p"></div>
+
+<div class="row">
+  <div class="card"><h3>Option 1: 근로소득자</h3><div id="d1"></div></div>
+  <div class="card"><h3>Option 2: 법인 경유</h3><div id="d2"></div></div>
+</div>
+
+<div style="position:relative;width:100%;height:280px;margin-top:0.75rem">
+  <canvas id="chart"></canvas>
+</div>
+<div id="leg" style="display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--color-text-secondary);margin-top:8px;justify-content:center"></div>
+
+<p class="note" id="noteText"></p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const fm=v=>Math.round(v/1e4).toLocaleString()+'만원';
+const ff=v=>Math.round(v).toLocaleString();
+
+const DEFAULTS={fx:1500,pd:450,od:200,tc:125,corpBase:0,finThresh:2000,gu:11,npR:4.75,hiR:3.595,ltR:13.14,eiR:0.9,npCap:637,empEi:0.25,empSi:0.7};
+function resetAdv(){Object.keys(DEFAULTS).forEach(id=>{$(id).value=DEFAULTS[id]});render();}
+
+function P(){
+  return{
+    FX:+$('fx').value,PD:+$('pd').value*1e4,OD:+$('od').value*1e4,TC:+$('tc').value*1e4,
+    CB:+$('corpBase').value*1e4,FT:+$('finThresh').value*1e4,GU:+$('gu').value/100,
+    NP:+$('npR').value/100,HI:+$('hiR').value/100,LT:+$('ltR').value/100,EI:+$('eiR').value/100,
+    NC:+$('npCap').value*1e4,EE:+$('empEi').value/100,ES:+$('empSi').value/100
+  };
+}
+
+/* ── 세금 계산 함수 ── */
+
+// 종합소득세 누진세율 (2026)
+function itax(tb){
+  const b=[[14e6,.06],[5e7,.15],[88e6,.24],[15e7,.35],[3e8,.38],[5e8,.40],[1e9,.42],[Infinity,.45]];
+  let t=0,p=0;for(const[l,r]of b){if(tb<=p)break;t+=(Math.min(tb,l)-p)*r;p=l;}return t;
+}
+
+// 근로소득공제
+function eid(g){
+  if(g<=5e6)return g*.7;if(g<=15e6)return 35e5+(g-5e6)*.4;
+  if(g<=45e6)return 75e5+(g-15e6)*.15;if(g<=1e8)return 12e6+(g-45e6)*.05;
+  return Math.min(2e7,1475e4+(g-1e8)*.02);
+}
+
+// 4대보험 근로자 부담 (일반 근로자 - 고용보험 포함)
+function i4w(m,p){return Math.min(m,p.NC)*p.NP+m*p.HI+m*p.HI*p.LT+m*p.EI;}
+
+// 4대보험 근로자 부담 (법인 대표이사 - 고용보험 제외)
+function i4rep(m,p){return Math.min(m,p.NC)*p.NP+m*p.HI+m*p.HI*p.LT;}
+
+// 4대보험 사용자 부담 - 일반 근로자 (연간)
+function empI(m,p){return(Math.min(m,p.NC)*p.NP+m*p.HI+m*p.HI*p.LT+m*p.EI+m*p.EE+m*p.ES)*12;}
+
+// 4대보험 사용자 부담 - 법인 대표이사 (연간, 고용보험/고용안정/산재 제외)
+function empIrep(m,p){return(Math.min(m,p.NC)*p.NP+m*p.HI+m*p.HI*p.LT)*12;}
+
+// 개인 소득세 계산
+function ptax(sal,ai,p){
+  const tb=Math.max(0,sal-eid(sal)-p.PD-ai-p.OD);
+  let t=Math.max(0,itax(tb)-p.TC);return{t,lo:t*.1,tb};
+}
+
+// 퇴직소득세 (1년 근속 기준)
+function retTax(aS){
+  const sv=aS/12;if(sv<=0)return{sv,tx:0,net:sv};
+  const cv=Math.max(0,sv-3e6)*12;let cd;
+  if(cv<=8e6)cd=cv;else if(cv<=7e7)cd=8e6+(cv-8e6)*.6;
+  else if(cv<=1e8)cd=452e5+(cv-7e7)*.55;else if(cv<=3e8)cd=617e5+(cv-1e8)*.45;
+  else cd=1517e5+(cv-3e8)*.35;
+  const tx=itax(Math.max(0,cv-cd))/12;return{sv,tx:tx*1.1,net:sv-tx*1.1};
+}
+
+// 법인세 (기존 과표 위에 추가)
+function corpTax(profit,base){
+  const f=x=>x<=2e8?x*.09:1.8e7+(x-2e8)*.19;
+  return Math.max(0,f(base+profit)-f(base));
+}
+
+// 배당소득세
+function dtax(div,stb,p){
+  if(div<=0)return{t:0,lo:0,mt:'없음'};
+  const wh=div*.14,whL=div*.014;
+  if(div<=p.FT)return{t:wh,lo:whL,mt:'분리 15.4%'};
+  const gu=div*p.GU,ct=itax(stb+div+gu)-itax(stb),dc=gu;
+  const comp=ct-dc,compL=comp*.1;
+  if(comp+compL>wh+whL)return{t:comp,lo:compL,mt:'종합과세'};
+  return{t:wh,lo:whL,mt:'종합과세(최저한세)'};
+}
+
+/* ── Option 1: 근로소득자 ── */
+function calcO1(GK,p){
+  const m=GK/12,ai=i4w(m,p)*12,pt=ptax(GK,ai,p),r=retTax(GK);
+  const nS=GK-ai-pt.t-pt.lo;
+  return{g:GK,ins:ai,it:pt.t,lo:pt.lo,tt:pt.t+pt.lo,sev:r.sv,sevTx:r.tx,sevNet:r.net,
+    nS,tNet:nS+r.net,burden:ai+pt.t+pt.lo+r.tx,txb:pt.tb};
+}
+
+/* ── Option 2: 법인 경유 ── */
+function calcO2(GK,mS,aE,divInput,p){
+  const aS=mS*12,ai=i4rep(mS,p)*12,ei=empIrep(mS,p),r=retTax(aS);
+  const cp=Math.max(0,GK-aS-ei-r.sv-aE);
+  const ct=corpTax(cp,p.CB),cl=ct*.1,ret=cp-ct-cl;
+  const pt=ptax(aS,ai,p),divAmt=Math.min(Math.max(0,divInput),ret),kept=ret-divAmt;
+  const d=dtax(divAmt,pt.tb,p);
+  const nS=aS-ai-pt.t-pt.lo,nD=divAmt-d.t-d.lo;
+  const tTax=ai+pt.t+pt.lo+r.tx+ct+cl+d.t+d.lo;
+  return{sal:aS,ins:ai,ei,aE,pt:pt.t+pt.lo,cp,ctt:ct+cl,ret,divAmt,dtt:d.t+d.lo,dm:d.mt,
+    nS,nD,kept,sev:r.sv,sevTx:r.tx,sevNet:r.net,
+    tNet:nS+r.net+nD,tTax,txb:pt.tb,npk:nS+r.net+nD+kept+aE};
+}
+
+/* ── 렌더링 ── */
+let ch;
+function render(){
+  const p=P(),GK=+$('gross').value*1e4,mS=+$('salary').value*1e4,aE=+$('expense').value*1e4;
+  // 배당 슬라이더 max를 세후 이익으로 동적 설정
+  const _aS=mS*12,_ei=empIrep(mS,p),_sv=_aS/12;
+  const _cp=Math.max(0,GK-_aS-_ei-_sv-aE),_ct=corpTax(_cp,p.CB);
+  const _ret=Math.max(0,_cp-_ct-_ct*.1);
+  const divSlider=$('divAmt');
+  const retMaxW=Math.floor(_ret/1e4);
+  divSlider.max=retMaxW;
+  if(+divSlider.value>retMaxW)divSlider.value=retMaxW;
+  const divInput=+divSlider.value*1e4;
+
+  // 슬라이더 값 표시
+  $('grV').textContent=ff(GK/1e4)+'만원';
+  $('grUsd').textContent='≈ USD '+ff(Math.round(GK/p.FX))+' (환율 '+ff(p.FX)+'원)';
+  $('salV').textContent=ff(mS/1e4)+'만원';
+  $('expV').textContent=ff(aE/1e4)+'만원';
+  $('divV').textContent=fm(divInput);
+  $('fxV').textContent=ff(p.FX)+'원';
+  $('pdV').textContent=ff(p.PD/1e4)+'만원';
+  $('odV').textContent=ff(p.OD/1e4)+'만원';
+  $('tcV').textContent=ff(p.TC/1e4)+'만원';
+  $('cbV').textContent=ff(p.CB/1e4)+'만원';
+  $('ftV').textContent=ff(p.FT/1e4)+'만원';
+  $('guV').textContent=(p.GU*100)+'%';
+  $('npV').textContent=(p.NP*100).toFixed(2)+'%';
+  $('hiV').textContent=(p.HI*100).toFixed(3)+'%';
+  $('ltV').textContent=(p.LT*100).toFixed(2)+'%';
+  $('eiV').textContent=(p.EI*100).toFixed(1)+'%';
+  $('ncV').textContent=ff(p.NC/1e4)+'만원';
+  $('eeV').textContent=(p.EE*100).toFixed(2)+'%';
+  $('esV').textContent=(p.ES*100).toFixed(1)+'%';
+
+  // 계산
+  const a=calcO1(GK,p),b=calcO2(GK,mS,aE,divInput,p);
+  $('divInfo').textContent=b.ret>0?'배당 가능 최대: '+fm(b.ret)+' / 유보: '+fm(b.kept):'법인 이익 없음';
+
+  const sav=b.npk-a.tNet;
+  $('m1').textContent=fm(a.tNet);
+  $('m2').textContent=fm(b.npk);
+  $('m2').parentElement.querySelector('.ml').textContent=b.kept>0?'Opt2 총수령+유보':'Opt2 총수령';
+  $('m3').textContent=(sav>=0?'+':'')+fm(sav);
+  $('m3').style.color=sav>=0?'var(--color-text-success)':'var(--color-text-danger)';
+  $('m4').textContent=(a.burden/GK*100).toFixed(1)+'% → '+((b.tTax+b.ei)/GK*100).toFixed(1)+'%';
+
+  const bar=$('savingsBar');
+  if(sav>=0){bar.className='sb sb-p';bar.textContent='Option 2가 연간 '+fm(sav)+' 절감';}
+  else{bar.className='sb sb-n';bar.textContent='Option 1이 연간 '+fm(-sav)+' 유리';}
+
+  // Option 1 상세
+  $('d1').innerHTML=`
+    <div class="l sec"><span>── 급여 ──</span></div>
+    <div class="l"><span>총급여</span><span>${fm(a.g)}</span></div>
+    <div class="l"><span>4대보험</span><span>-${fm(a.ins)}</span></div>
+    <div class="l"><span>소득세</span><span>-${fm(a.it)}</span></div>
+    <div class="l"><span>지방소득세</span><span>-${fm(a.lo)}</span></div>
+    <div class="l st"><span>급여 실수령</span><span>${fm(a.nS)}</span></div>
+    <div class="l ss sec"><span>── 퇴직금 ──</span></div>
+    <div class="l"><span>퇴직금 적립</span><span>${fm(a.sev)}</span></div>
+    <div class="l"><span>퇴직소득세</span><span>-${fm(a.sevTx)}</span></div>
+    <div class="l st"><span>퇴직 실수령</span><span>${fm(a.sevNet)}</span></div>
+    <div class="l t"><span>총 실수령</span><span>${fm(a.tNet)}</span></div>
+    <div class="l t"><span>총 부담</span><span style="color:var(--color-text-danger)">${fm(a.burden)}</span></div>
+    <div class="l"><span>실효세율</span><span>${(a.burden/a.g*100).toFixed(1)}%</span></div>`;
+
+  // Option 2 상세
+  const dS=b.divAmt>0?`
+    <div class="l ss sec"><span>── 배당 ──</span></div>
+    <div class="l"><span>배당액</span><span>${fm(b.divAmt)}</span></div>
+    <div class="l"><span>배당세 (${b.dm})</span><span>-${fm(b.dtt)}</span></div>
+    <div class="l st"><span>배당 실수령</span><span>${fm(b.nD)}</span></div>`:'';
+  const kS=b.kept>0?`
+    <div class="l ss sec"><span>── 유보 ──</span></div>
+    <div class="l"><span>법인 유보금</span><span style="color:var(--color-text-info)">${fm(b.kept)}</span></div>`:'';
+
+  $('d2').innerHTML=`
+    <div class="l sec"><span>── 대표 급여 ──</span></div>
+    <div class="l"><span>대표 급여</span><span>${fm(b.sal)}</span></div>
+    <div class="l"><span>4대보험</span><span>-${fm(b.ins)}</span></div>
+    <div class="l"><span>소득세+지방세</span><span>-${fm(b.pt)}</span></div>
+    <div class="l st"><span>급여 실수령</span><span>${fm(b.nS)}</span></div>
+    <div class="l ss sec"><span>── 퇴직금 ──</span></div>
+    <div class="l"><span>퇴직금 적립</span><span>${fm(b.sev)}</span></div>
+    <div class="l"><span>퇴직소득세</span><span>-${fm(b.sevTx)}</span></div>
+    <div class="l st"><span>퇴직 실수령</span><span>${fm(b.sevNet)}</span></div>
+    <div class="l ss sec"><span>── 법인 비용 ──</span></div>
+    <div class="l"><span>사용자 4대보험</span><span>-${fm(b.ei)}</span></div>
+    <div class="l"><span>법인 경비</span><span>-${fm(b.aE)}</span></div>
+    <div class="l ss sec"><span>── 법인세 ──</span></div>
+    <div class="l"><span>법인 이익</span><span>${fm(b.cp)}</span></div>
+    <div class="l"><span>법인세+지방세</span><span>-${fm(b.ctt)}</span></div>
+    <div class="l st"><span>세후 이익</span><span>${fm(b.ret)}</span></div>
+    ${dS}${kS}
+    <div class="l t"><span>총 실수령${b.kept>0?'+유보':''}</span><span style="color:var(--color-text-success)">${fm(b.npk)}</span></div>
+    <div class="l t"><span>총 부담</span><span>${fm(b.tTax+b.ei)}</span></div>
+    <div class="l"><span>실효세율</span><span>${((b.tTax+b.ei)/GK*100).toFixed(1)}%</span></div>`;
+
+  // 하단 노트
+  $('noteText').textContent=`적용 가정: 환율 ${ff(p.FX)}원 / 인적공제 ${ff(p.PD/1e4)}만 / 기타공제 ${ff(p.OD/1e4)}만 / 세액공제 ${ff(p.TC/1e4)}만 / 종합과세 기준 ${ff(p.FT/1e4)}만 / 법인 기존과표 ${ff(p.CB/1e4)}만 / 국민연금 ${(p.NP*100).toFixed(2)}%(상한 ${ff(p.NC/1e4)}만) / 건강 ${(p.HI*100).toFixed(3)}% / 장기요양 ×${(p.LT*100).toFixed(1)}% / 고용 ${(p.EI*100).toFixed(1)}% / 퇴직소득세 1년 근속 기준`;
+
+  // 차트
+  const dk=matchMedia('(prefers-color-scheme:dark)').matches;
+  const C={i:dk?'#85B7EB':'#378ADD',c:dk?'#5DCAA5':'#1D9E75',d:dk?'#F5C4B3':'#D85A30',s:dk?'#B4B2A9':'#888780',r:dk?'#CECBF6':'#7F77DD'};
+  const data={labels:['Option 1','Option 2'],datasets:[
+    {label:'소득세+지방세',data:[a.tt,b.pt],backgroundColor:C.i},
+    {label:'퇴직소득세',data:[a.sevTx,b.sevTx],backgroundColor:C.r},
+    {label:'법인세',data:[0,b.ctt],backgroundColor:C.c},
+    {label:'배당소득세',data:[0,b.dtt],backgroundColor:C.d},
+    {label:'4대보험',data:[a.ins,b.ins],backgroundColor:C.s}
+  ]};
+  $('leg').innerHTML=data.datasets.map(d=>`<span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:${d.backgroundColor};display:inline-block"></span>${d.label}</span>`).join('');
+  if(ch)ch.destroy();
+  ch=new Chart($('chart'),{type:'bar',data,options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+Math.round(c.raw/1e4).toLocaleString()+'만원'}}},
+    scales:{x:{stacked:true,ticks:{color:dk?'#B4B2A9':'#888780'},grid:{display:false}},
+      y:{stacked:true,ticks:{callback:v=>Math.round(v/1e7)+'천만',color:dk?'#B4B2A9':'#888780'},grid:{color:dk?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.06)'}}}
+  }});
+}
+
+// 모든 슬라이더에 이벤트 바인딩
+document.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',render));
+render();
+</script>
+
+</body>
+</html>
