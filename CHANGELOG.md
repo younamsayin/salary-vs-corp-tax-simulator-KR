@@ -5,6 +5,7 @@
 ### Deployment
 - Removed `serve.py` because Vercel was interpreting the project as a Python/Lambda deployment instead of a static site.
 - Added `vercel.json` to force static routing to `index.html`.
+- Synced `index.html` with the latest `급여구조_세금비교_시뮬레이터_v2.html` so Vercel serves the current simulator UI, including the foreign flat-tax option.
 
 ### Added
 - Created `급여구조_세금비교_시뮬레이터_v2.html` as a separate v2 simulator file.
