@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>급여 구조 세금 비교 시뮬레이터 v2</title>
+<style>
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f4f0;
+  --color-background-tertiary: #eae9e5;
+  --color-background-info: #E6F1FB;
+  --color-background-success: #EAF3DE;
+  --color-background-danger: #FCEBEB;
+  --color-background-warning: #FAEEDA;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666663;
+  --color-text-tertiary: #999996;
+  --color-text-info: #185FA5;
+  --color-text-success: #3B6D11;
+  --color-text-danger: #A32D2D;
+  --color-text-warning: #854F0B;
+  --color-border-tertiary: rgba(0,0,0,0.12);
+  --color-border-secondary: rgba(0,0,0,0.2);
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background-primary: #1a1a1a;
+    --color-background-secondary: #2a2a28;
+    --color-background-tertiary: #333330;
+    --color-background-info: #0C447C;
+    --color-background-success: #27500A;
+    --color-background-danger: #501313;
+    --color-background-warning: #412402;
+    --color-text-primary: #e8e8e5;
+    --color-text-secondary: #a0a09c;
+    --color-text-tertiary: #77776f;
+    --color-text-info: #85B7EB;
+    --color-text-success: #97C459;
+    --color-text-danger: #F09595;
+    --color-text-warning: #FAC775;
+    --color-border-tertiary: rgba(255,255,255,0.12);
+    --color-border-secondary: rgba(255,255,255,0.2);
+  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  background: var(--color-background-primary);
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+h1 { font-size: 20px; font-weight: 500; margin-bottom: 0.25rem; }
+.page-sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1.25rem; }
+.lb { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 5px; font-weight: 500; }
+.row { display: flex; gap: 10px; margin-bottom: 10px; }
+.card {
+  flex: 1; background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md); padding: 0.8rem; min-width: 0; overflow: hidden;
+}
+.card h3 { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+.l { display: flex; justify-content: space-between; font-size: 11.5px; padding: 2px 0; gap: 4px; }
+.l span:last-child { white-space: nowrap; text-align: right; }
+.l.t { font-weight: 500; border-top: 0.5px solid var(--color-border-tertiary); margin-top: 3px; padding-top: 4px; }
+.l.st { font-weight: 500; }
+.l.ss { margin-top: 5px; padding-top: 4px; border-top: 0.5px dashed var(--color-border-tertiary); }
+.l.sec { font-size: 10px; color: var(--color-text-tertiary); }
+.calc-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 1px dotted var(--color-border-secondary);
+  cursor: help;
+}
+.calc-tip:focus-visible {
+  outline: 2px solid var(--color-text-info);
+  outline-offset: 2px;
+  border-bottom-color: transparent;
+}
+.calc-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: min(280px, 70vw);
+  padding: 8px 10px;
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-tertiary);
+  color: var(--color-text-primary);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 20;
+}
+.calc-tip:hover::after,
+.calc-tip:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+.sr { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sr label { font-size: 12px; color: var(--color-text-secondary); min-width: 145px; flex-shrink: 0; }
+.sr input[type=range] { flex: 1; min-width: 0; height: 4px; accent-color: var(--color-text-info); }
+.sr .v { font-size: 12px; font-weight: 500; min-width: 88px; text-align: right; flex-shrink: 0; }
+.static-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.4rem 0.55rem; background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md); margin-top: 6px; font-size: 12px;
+}
+.static-row strong { font-weight: 600; }
+.sb {
+  border-radius: var(--border-radius-md); padding: 0.55rem 0.75rem;
+  text-align: center; font-weight: 500; font-size: 13.5px; margin-bottom: 0.75rem;
+}
+.sb-p { background: var(--color-background-success); color: var(--color-text-success); }
+.sb-n { background: var(--color-background-danger); color: var(--color-text-danger); }
+.mr { display: flex; gap: 6px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.m { flex: 1; min-width: 160px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.5rem; text-align: center; }
+.m .ml { font-size: 9.5px; color: var(--color-text-secondary); }
+.m .mv { font-size: 15px; font-weight: 500; margin-top: 1px; }
+.sub { font-size: 10px; color: var(--color-text-tertiary); margin-top: -2px; margin-left: 153px; margin-bottom: 5px; }
+.adv-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px;
+  margin-bottom: 10px; padding: 10px 12px;
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary);
+}
+.adv-group { margin-bottom: 4px; }
+.agt { font-size: 10.5px; font-weight: 500; color: var(--color-text-tertiary); margin-bottom: 4px; letter-spacing: 0.3px; }
+.reset-btn {
+  font-size: 11px; color: var(--color-text-info); cursor: pointer;
+  border: none; background: none; font-family: inherit; padding: 2px 8px; border-radius: 4px; float: right;
+}
+.reset-btn:hover { background: var(--color-background-info); }
+.note { font-size: 10px; color: var(--color-text-tertiary); margin-top: 8px; line-height: 1.5; }
+.section-divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 12px 0; }
+@media (max-width: 800px) {
+  .row { flex-direction: column; }
+  .adv-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .m { min-width: calc(50% - 4px); }
+  .sr label { min-width: 112px; font-size: 11px; }
+  .sr .v { min-width: 70px; font-size: 11px; }
+  .sub { margin-left: 120px; }
+}
+</style>
+</head>
+<body>
+
+<h1>급여 구조 세금 비교 시뮬레이터 v2</h1>
+<p class="page-sub">싱가폴 회사 → 한국 근로소득 vs 한국 법인 경유 vs 배우자 포함 법인 경유 비교</p>
+
+<div style="margin-bottom:8px">
+<p class="lb">기본 설정</p>
+<div class="sr"><label>연간 총급여</label><input type="range" min="8000" max="60000" step="1000" value="20000" id="gross"><span class="v" id="grV"></span></div>
+<div class="sub" id="grUsd"></div>
+<div class="sr"><label>대표 월급여 (Opt2/3)</label><input type="range" min="200" max="2000" step="50" value="400" id="salary"><span class="v" id="salV"></span></div>
+<div class="sr"><label>배우자 월급여 (Opt3)</label><input type="range" min="0" max="2000" step="50" value="0" id="spouseSalary"><span class="v" id="sspV"></span></div>
+<div class="sr"><label>법인 경비 (연간)</label><input type="range" min="0" max="8000" step="100" value="1000" id="expense"><span class="v" id="expV"></span></div>
+<div class="sr"><label>배당 금액</label><input type="range" min="0" max="10000" step="100" value="0" id="divAmt"><span class="v" id="divV"></span></div>
+<div class="sr"><label>근속연수</label><input type="range" min="1" max="30" step="1" value="4" id="serviceYears"><span class="v" id="syV"></span></div>
+<div class="sub" id="divInfo"></div>
+<div class="static-row"><span>배우자 지분 가정 (Opt3)</span><strong>50%</strong></div>
+</div>
+
+<div style="margin-bottom:12px">
+<p class="lb">고급 설정 (가정 조정) <button class="reset-btn" onclick="resetAdv()">초기화</button></p>
+<div class="adv-grid">
+  <div class="adv-group">
+    <div class="agt">환율 / 공제</div>
+    <div class="sr"><label>환율 (USD/KRW)</label><input type="range" min="1100" max="1700" step="10" value="1500" id="fx"><span class="v" id="fxV"></span></div>
+    <div class="sr"><label>부양가족 수</label><input type="range" min="1" max="6" step="1" value="4" id="fam"><span class="v" id="famV"></span></div>
+  </div>
+  <div class="adv-group">
+    <div class="agt">법인 / 배당</div>
+    <div class="sr"><label>법인 기존 과표</label><input type="range" min="0" max="30000" step="1000" value="0" id="corpBase"><span class="v" id="cbV"></span></div>
+    <div class="sr"><label>종합과세 기준</label><input type="range" min="1000" max="5000" step="500" value="2000" id="finThresh"><span class="v" id="ftV"></span></div>
+    <div class="sr"><label>배당 Gross-up율</label><input type="range" min="0" max="20" step="1" value="11" id="gu"><span class="v" id="guV"></span></div>
+  </div>
+  <div class="adv-group">
+    <div class="agt">4대보험 (근로자 부담)</div>
+    <div class="sr"><label>국민연금</label><input type="range" min="4" max="7" step="0.25" value="4.75" id="npR"><span class="v" id="npV"></span></div>
+    <div class="sr"><label>건강보험</label><input type="range" min="3" max="5" step="0.05" value="3.595" id="hiR"><span class="v" id="hiV"></span></div>
+    <div class="sr"><label>장기요양 (건보대비)</label><input type="range" min="10" max="18" step="0.5" value="13.14" id="ltR"><span class="v" id="ltV"></span></div>
+  </div>
+  <div class="adv-group">
+    <div class="agt">4대보험 (사용자 부담 등)</div>
+    <div class="sr"><label>국민연금 상한</label><input type="range" min="500" max="900" step="10" value="637" id="npCap"><span class="v" id="ncV"></span></div>
+    <div class="sr"><label>고용안정 (사용자)</label><input type="range" min="0.15" max="0.85" step="0.05" value="0.25" id="empEi"><span class="v" id="eeV"></span></div>
+    <div class="sr"><label>산재보험 (사용자, 배우자용)</label><input type="range" min="0.3" max="3" step="0.1" value="0.7" id="empSi"><span class="v" id="esV"></span></div>
+  </div>
+</div>
+</div>
+
+<div class="mr">
+  <div class="m"><div class="ml">Opt1 현금 / IRP / 국연</div><div class="mv" id="m1"></div></div>
+  <div class="m"><div class="ml">Opt2 현금 / IRP / 국연 / 유보</div><div class="mv" id="m2"></div></div>
+  <div class="m"><div class="ml">Opt3 현금 / IRP / 국연 / 유보</div><div class="mv" id="m3"></div></div>
+  <div class="m"><div class="ml">Opt3 총가치 vs Opt1</div><div class="mv" id="m4"></div></div>
+  <div class="m"><div class="ml">실효세율</div><div class="mv" id="m5"></div></div>
+</div>
+
+<div id="savingsBar" class="sb sb-p"></div>
+
+<div class="row">
+  <div class="card"><h3>Option 1: 근로소득자</h3><div id="d1"></div></div>
+  <div class="card"><h3>Option 2: 법인 경유 (대표이사 only)</h3><div id="d2"></div></div>
+  <div class="card"><h3>Option 3: 법인 경유 배우자포함</h3><div id="d3"></div></div>
+</div>
+
+<div style="position:relative;width:100%;height:300px;margin-top:0.75rem">
+  <canvas id="chart"></canvas>
+</div>
+<div id="leg" style="display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--color-text-secondary);margin-top:8px;justify-content:center"></div>
+
+<p class="note" id="noteText"></p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="./withholding_table_2026.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const fm=v=>Math.round(v/1e4).toLocaleString()+'만원';
+const ff=v=>Math.round(v).toLocaleString();
+const fw=v=>Math.round(v).toLocaleString()+'원';
+const esc=s=>String(s)
+  .replace(/&/g,'&amp;')
+  .replace(/"/g,'&quot;')
+  .replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;');
+const tip=(value,description)=>`<span class="calc-tip" tabindex="0" data-tip="${esc(description)}">${value}</span>`;
+
+const MONTHLY_NONTAXABLE=200000;
+const DEFAULTS={fx:1500,fam:4,corpBase:0,finThresh:2000,gu:11,npR:4.75,hiR:3.595,ltR:13.14,npCap:637,empEi:0.25,empSi:0.7};
+function resetAdv(){Object.keys(DEFAULTS).forEach(id=>{$(id).value=DEFAULTS[id]});render();}
+
+function P(){
+  return{
+    FX:+$('fx').value,FAM:+$('fam').value,
+    CB:+$('corpBase').value*1e4,FT:+$('finThresh').value*1e4,GU:+$('gu').value/100,
+    NP:+$('npR').value/100,HI:+$('hiR').value/100,LT:+$('ltR').value/100,EI:0,
+    NC:+$('npCap').value*1e4,EE:+$('empEi').value/100,ES:+$('empSi').value/100,SY:+$('serviceYears').value
+  };
+}
+
+function itax(tb){
+  const b=[[14e6,.06],[5e7,.15],[88e6,.24],[15e7,.35],[3e8,.38],[5e8,.40],[1e9,.42],[Infinity,.45]];
+  let t=0,p=0;for(const[l,r]of b){if(tb<=p)break;t+=(Math.min(tb,l)-p)*r;p=l;}return t;
+}
+
+function eid(g){
+  if(g<=5e6)return g*.7;if(g<=15e6)return 35e5+(g-5e6)*.4;
+  if(g<=45e6)return 75e5+(g-15e6)*.15;if(g<=1e8)return 12e6+(g-45e6)*.05;
+  return Math.min(2e7,1475e4+(g-1e8)*.02);
+}
+
+function i4w(m,p){return Math.min(m,p.NC)*p.NP+m*p.HI+m*p.HI*p.LT+m*p.EI;}
+function i4rep(m,p){return Math.min(m,p.NC)*p.NP+m*p.HI+m*p.HI*p.LT;}
+function empI(m,p){return(Math.min(m,p.NC)*p.NP+m*p.HI+m*p.HI*p.LT+m*p.EI+m*p.EE+m*p.ES)*12;}
+function empIrep(m,p){return(Math.min(m,p.NC)*p.NP+m*p.HI+m*p.HI*p.LT)*12;}
+
+function contributableMonthly(m){
+  return Math.max(0,m-MONTHLY_NONTAXABLE);
+}
+
+function insWorker(m,p){
+  const b=contributableMonthly(m);
+  const np=Math.min(b,p.NC)*p.NP*12;
+  const hi=b*p.HI*12;
+  const lt=b*p.HI*p.LT*12;
+  const ei=b*p.EI*12;
+  return{np,hi,lt,ei,total:np+hi+lt+ei};
+}
+
+function insRep(m,p){
+  const b=contributableMonthly(m);
+  const np=Math.min(b,p.NC)*p.NP*12;
+  const hi=b*p.HI*12;
+  const lt=b*p.HI*p.LT*12;
+  return{np,hi,lt,ei:0,total:np+hi+lt};
+}
+
+function empInsWorker(m,p){
+  const b=contributableMonthly(m);
+  const np=Math.min(b,p.NC)*p.NP*12;
+  const hi=b*p.HI*12;
+  const lt=b*p.HI*p.LT*12;
+  const ei=b*p.EI*12;
+  const ee=b*p.EE*12;
+  const si=b*p.ES*12;
+  return{np,hi,lt,ei,ee,si,total:np+hi+lt+ei+ee+si};
+}
+
+function empInsRep(m,p){
+  const b=contributableMonthly(m);
+  const np=Math.min(b,p.NC)*p.NP*12;
+  const hi=b*p.HI*12;
+  const lt=b*p.HI*p.LT*12;
+  return{np,hi,lt,ei:0,ee:0,si:0,total:np+hi+lt};
+}
+
+function monthlyLocalTax(incomeTax){
+  return Math.floor((incomeTax||0)*0.1/10)*10;
+}
+
+function withholdingMonthlyIncomeTax(monthlyTaxable,familyCount){
+  const fam=Math.max(1,Math.min(11,Math.round(familyCount||1)));
+  if(monthlyTaxable<WITHHOLDING_TABLE[0][0])return{tax:0,fam,min:0,max:WITHHOLDING_TABLE[0][0]};
+  for(const row of WITHHOLDING_TABLE){
+    const [min,max,...values]=row;
+    if(monthlyTaxable>=min&&monthlyTaxable<max)return{tax:values[fam-1]??0,fam,min,max};
+  }
+  // 고액급여자 공식: 소득세법 시행령 별표2 (월 과세급여 1,000만원 초과)
+  // 기준세액: 1,000만원일 때 부양가족 수별 세액 (1명~11명)
+  const BASE10M=[1507400,1431570,1200840,1170840,1140840,1110840,1080840,1050840,1020840,990840,960840];
+  const base=BASE10M[fam-1];
+  const m=monthlyTaxable;
+  let tax;
+  if(m<14000000){
+    tax=base+(m-10000000)*0.98*0.35+25000;
+  }else if(m<28000000){
+    tax=base+1397000+(m-14000000)*0.98*0.38;
+  }else if(m<30000000){
+    tax=base+6610600+(m-28000000)*0.98*0.40;
+  }else if(m<45000000){
+    tax=base+7394600+(m-30000000)*0.40;
+  }else if(m<87000000){
+    tax=base+13394600+(m-45000000)*0.42;
+  }else{
+    tax=base+31034600+(m-87000000)*0.45;
+  }
+  return{tax:Math.max(0,Math.round(tax)),fam,min:10000000,max:Infinity};
+}
+
+function ptax(sal,ai,p){
+  const monthlySalary=sal/12;
+  const monthlyTaxable=contributableMonthly(monthlySalary);
+  const annualTaxableSalary=monthlyTaxable*12;
+  const familyDeduction=p.FAM*1500000;
+  const estimatedTaxBase=Math.max(0,annualTaxableSalary-eid(annualTaxableSalary)-familyDeduction-ai);
+  const lookup=withholdingMonthlyIncomeTax(monthlyTaxable,p.FAM);
+  const monthlyIncomeTax=lookup.tax;
+  const monthlyLo=monthlyLocalTax(monthlyIncomeTax);
+  const t=monthlyIncomeTax*12;
+  const lo=monthlyLo*12;
+  return{
+    t,lo,tb:estimatedTaxBase,grossTax:t,monthlyTaxable,familyDeduction,annualTaxableSalary,
+    monthlyIncomeTax,monthlyLo,familyUsed:lookup.fam,bracketMin:lookup.min,bracketMax:lookup.max
+  };
+}
+
+function serviceDeduction(years){
+  const y=Math.max(1,years);
+  if(y<=5)return y*1e6;
+  if(y<=10)return 5e6+(y-5)*2e6;
+  if(y<=20)return 15e6+(y-10)*2.5e6;
+  return 40e6+(y-20)*3e6;
+}
+
+function convertedSalaryDeduction(v){
+  if(v<=8e6)return v;
+  if(v<=7e7)return 8e6+(v-8e6)*0.6;
+  if(v<=1e8)return 45.2e6+(v-7e7)*0.55;
+  if(v<=3e8)return 61.7e6+(v-1e8)*0.45;
+  return 151.7e6+(v-3e8)*0.35;
+}
+
+function retTax(aS,years){
+  const sv=aS/12,y=Math.max(1,years);
+  if(sv<=0)return{sv,tx:0,net:sv,inc:0,sd:0,cv:0,cd:0,tb:0,baseTax:0};
+  const inc=sv;
+  const sd=Math.min(inc,serviceDeduction(y));
+  const cv=Math.max(0,(inc-sd)*12/y);
+  const cd=Math.min(cv,convertedSalaryDeduction(cv));
+  const tb=Math.max(0,cv-cd);
+  const baseTax=itax(tb);
+  const tx=baseTax/12*y*1.1;
+  return{sv,tx,net:sv,inc,sd,cv,cd,tb,baseTax,deferred:true};
+}
+
+function corpTax(profit,base){
+  const f=x=>x<=2e8?x*.09:1.8e7+(x-2e8)*.19;
+  return Math.max(0,f(base+profit)-f(base));
+}
+
+function dtax(div,stb,p){
+  if(div<=0)return{t:0,lo:0,mt:'없음'};
+  const wh=div*.14,whL=div*.014;
+  if(div<=p.FT)return{t:wh,lo:whL,mt:'분리 15.4%'};
+  const gu=div*p.GU,ct=itax(stb+div+gu)-itax(stb),dc=gu;
+  const comp=ct-dc,compL=comp*.1;
+  if(comp+compL>wh+whL)return{t:comp,lo:compL,mt:'종합과세'};
+  return{t:wh,lo:whL,mt:'종합과세(최저한세)'};
+}
+
+function calcO1(GK,p){
+  const m=GK/12,insD=insRep(m,p),empInsD=empInsRep(m,p),ai=insD.total,pt=ptax(GK,ai,p),r=retTax(GK,p.SY);
+  const nS=GK-ai-pt.t-pt.lo;
+  return{g:GK,ins:ai,it:pt.t,lo:pt.lo,tt:pt.t+pt.lo,sev:r.sv,sevTx:r.tx,sevNet:r.net,
+    sd:r.sd,cv:r.cv,cd:r.cd,
+    insD,empInsD,
+    grossTax:pt.grossTax,monthlyTaxable:pt.monthlyTaxable,monthlyIncomeTax:pt.monthlyIncomeTax,monthlyLo:pt.monthlyLo,
+    cash:nS,irp:r.net,employeeNp:insD.np,employerNp:empInsD.np,totalNp:insD.np+empInsD.np,totalValue:nS+r.net+insD.np+empInsD.np,nS,tNet:nS+r.net,burden:ai+pt.t+pt.lo,txb:pt.tb};
+}
+
+function calcCorpBase(GK,mS,aE,p){
+  const aS=mS*12,insD=insRep(mS,p),empInsD=empInsRep(mS,p),ai=insD.total,ei=empInsD.total,r=retTax(aS,p.SY);
+  const cp=Math.max(0,GK-aS-ei-r.sv-aE);
+  const ct=corpTax(cp,p.CB),cl=ct*.1,ret=cp-ct-cl;
+  const pt=ptax(aS,ai,p);
+  const nS=aS-ai-pt.t-pt.lo;
+  return{aS,ai,ei,r,cp,ct,cl,ret,pt,nS,aE,insD,empInsD};
+}
+
+function calcCorpBaseWithSpouse(GK,mS,sM,aE,p){
+  const repInsD=insRep(mS,p),repEmpInsD=empInsRep(mS,p),repSal=mS*12,repIns=repInsD.total,repEmpIns=repEmpInsD.total,repRet=retTax(repSal,p.SY),repTax=ptax(repSal,repIns,p);
+  const repNet=repSal-repIns-repTax.t-repTax.lo;
+  const spouseInsD=insWorker(sM,p),spouseEmpInsD=empInsWorker(sM,p),spouseSal=sM*12,spouseIns=spouseInsD.total,spouseEmpIns=spouseEmpInsD.total,spouseRet=retTax(spouseSal,p.SY),spouseTax=ptax(spouseSal,spouseIns,p);
+  const spouseNet=spouseSal-spouseIns-spouseTax.t-spouseTax.lo;
+  const cp=Math.max(0,GK-repSal-repEmpIns-repRet.sv-spouseSal-spouseEmpIns-spouseRet.sv-aE);
+  const ct=corpTax(cp,p.CB),cl=ct*.1,ret=cp-ct-cl;
+  return{
+    repSal,repIns,repEmpIns,repRet,repTax,repNet,repInsD,repEmpInsD,
+    spouseSal,spouseIns,spouseEmpIns,spouseRet,spouseTax,spouseNet,spouseInsD,spouseEmpInsD,
+    cp,ct,cl,ret,aE
+  };
+}
+
+function calcO2(GK,mS,aE,divInput,p){
+  const base=calcCorpBase(GK,mS,aE,p);
+  const divAmt=Math.min(Math.max(0,divInput),base.ret),kept=base.ret-divAmt;
+  const d=dtax(divAmt,base.pt.tb,p);
+  const nD=divAmt-d.t-d.lo;
+  const tTax=base.ai+base.pt.t+base.pt.lo+base.ct+base.cl+d.t+d.lo;
+  return{
+    sal:base.aS,ins:base.ai,ei:base.ei,aE:base.aE,pt:base.pt.t+base.pt.lo,cp:base.cp,ctt:base.ct+base.cl,
+    ret:base.ret,divAmt,dtt:d.t+d.lo,dm:d.mt,nS:base.nS,nD,kept,sev:base.r.sv,sevTx:base.r.tx,sevNet:base.r.net,
+    sd:base.r.sd,cv:base.r.cv,cd:base.r.cd,
+    insD:base.insD,empInsD:base.empInsD,
+    grossTax:base.pt.grossTax,it:base.pt.t,lo:base.pt.lo,monthlyTaxable:base.pt.monthlyTaxable,monthlyIncomeTax:base.pt.monthlyIncomeTax,monthlyLo:base.pt.monthlyLo,
+    cash:base.nS+nD+aE,irp:base.r.net,employeeNp:base.insD.np,employerNp:base.empInsD.np,totalNp:base.insD.np+base.empInsD.np,totalValue:base.nS+base.r.net+nD+kept+aE+base.insD.np+base.empInsD.np,tNet:base.nS+base.r.net+nD,tTax,txb:base.pt.tb,npk:base.nS+base.r.net+nD+kept+aE
+  };
+}
+
+function calcO3(GK,mS,sM,aE,divInput,p){
+  const base=calcCorpBaseWithSpouse(GK,mS,sM,aE,p);
+  const divAmt=Math.min(Math.max(0,divInput),base.ret),kept=base.ret-divAmt;
+  const repDiv=divAmt*.5, spouseDiv=divAmt*.5;
+  const repTax=dtax(repDiv,base.repTax.tb,p);
+  const spouseTax=dtax(spouseDiv,0,p);
+  const repNet=repDiv-repTax.t-repTax.lo;
+  const spouseNet=spouseDiv-spouseTax.t-spouseTax.lo;
+  const dtt=repTax.t+repTax.lo+spouseTax.t+spouseTax.lo;
+  const tTax=base.repIns+base.repTax.t+base.repTax.lo+base.spouseIns+base.spouseTax.t+base.spouseTax.lo+base.ct+base.cl+dtt;
+  return{
+    sal:base.repSal,ins:base.repIns,ei:base.repEmpIns+base.spouseEmpIns,aE:base.aE,pt:base.repTax.t+base.repTax.lo,cp:base.cp,ctt:base.ct+base.cl,
+    ret:base.ret,divAmt,kept,sev:base.repRet.sv,sevTx:base.repRet.tx,sevNet:base.repRet.net,nS:base.repNet,tTax,
+    sd:base.repRet.sd,cv:base.repRet.cv,cd:base.repRet.cd,
+    insD:base.repInsD,empInsD:base.repEmpInsD,
+    grossTax:base.repTax.grossTax,it:base.repTax.t,lo:base.repTax.lo,monthlyTaxable:base.repTax.monthlyTaxable,monthlyIncomeTax:base.repTax.monthlyIncomeTax,monthlyLo:base.repTax.monthlyLo,
+    spouseSal:base.spouseSal,spouseIns:base.spouseIns,spousePt:base.spouseTax.t+base.spouseTax.lo,
+    spouseInsD:base.spouseInsD,spouseEmpInsD:base.spouseEmpInsD,
+    spouseGrossTax:base.spouseTax.grossTax,spouseIt:base.spouseTax.t,spouseLo:base.spouseTax.lo,spouseMonthlyTaxable:base.spouseTax.monthlyTaxable,spouseMonthlyIncomeTax:base.spouseTax.monthlyIncomeTax,spouseMonthlyLo:base.spouseTax.monthlyLo,
+    spouseSev:base.spouseRet.sv,spouseSevTx:base.spouseRet.tx,spouseSevNet:base.spouseRet.net,spouseSd:base.spouseRet.sd,spouseCv:base.spouseRet.cv,spouseCd:base.spouseRet.cd,spouseSalaryNet:base.spouseNet,
+    repDiv,spouseDiv,repTax:repTax.t+repTax.lo,spouseTax:spouseTax.t+spouseTax.lo,
+    repMethod:repTax.mt,spouseMethod:spouseTax.mt,repNet,spouseNet,
+    cash:base.repNet+base.spouseNet+repNet+spouseNet+aE,irp:base.repRet.net+base.spouseRet.net,employeeNp:base.repInsD.np+base.spouseInsD.np,employerNp:base.repEmpInsD.np+base.spouseEmpInsD.np,totalNp:base.repInsD.np+base.spouseInsD.np+base.repEmpInsD.np+base.spouseEmpInsD.np,totalValue:base.repNet+base.repRet.net+base.spouseNet+base.spouseRet.net+repNet+spouseNet+kept+aE+base.repInsD.np+base.spouseInsD.np+base.repEmpInsD.np+base.spouseEmpInsD.np,
+    nHouse:base.repNet+base.repRet.net+base.spouseNet+base.spouseRet.net+repNet+spouseNet,
+    npk:base.repNet+base.repRet.net+base.spouseNet+base.spouseRet.net+repNet+spouseNet+kept+aE
+  };
+}
+
+let ch;
+function render(){
+  const p=P(),GK=+$('gross').value*1e4,mS=+$('salary').value*1e4,sM=+$('spouseSalary').value*1e4,aE=+$('expense').value*1e4;
+  const base=calcCorpBase(GK,mS,aE,p);
+  const base3=calcCorpBaseWithSpouse(GK,mS,sM,aE,p);
+  const divSlider=$('divAmt');
+  const retMaxW=Math.max(0,Math.floor(base.ret/1e4));
+  const retMaxW3=Math.max(0,Math.floor(base3.ret/1e4));
+  const divMax=Math.min(retMaxW,retMaxW3);
+  divSlider.max=divMax;
+  if(+divSlider.value>divMax)divSlider.value=divMax;
+  const divInput=+divSlider.value*1e4;
+
+  $('grV').textContent=ff(GK/1e4)+'만원';
+  $('grUsd').textContent='≈ USD '+ff(Math.round(GK/p.FX))+' (환율 '+ff(p.FX)+'원)';
+  $('salV').textContent=ff(mS/1e4)+'만원';
+  $('sspV').textContent=ff(sM/1e4)+'만원';
+  $('expV').textContent=ff(aE/1e4)+'만원';
+  $('divV').textContent=fm(divInput);
+  $('syV').textContent=ff(p.SY)+'년';
+  $('fxV').textContent=ff(p.FX)+'원';
+  $('famV').textContent=ff(p.FAM)+'명';
+  $('cbV').textContent=ff(p.CB/1e4)+'만원';
+  $('ftV').textContent=ff(p.FT/1e4)+'만원';
+  $('guV').textContent=(p.GU*100)+'%';
+  $('npV').textContent=(p.NP*100).toFixed(2)+'%';
+  $('hiV').textContent=(p.HI*100).toFixed(3)+'%';
+  $('ltV').textContent=(p.LT*100).toFixed(2)+'%';
+  $('ncV').textContent=ff(p.NC/1e4)+'만원';
+  $('eeV').textContent=(p.EE*100).toFixed(2)+'%';
+  $('esV').textContent=(p.ES*100).toFixed(1)+'%';
+
+  const a=calcO1(GK,p),b=calcO2(GK,mS,aE,divInput,p),c=calcO3(GK,mS,sM,aE,divInput,p);
+  const aTip={
+    np:`min(월 과세급여 ${fm(a.monthlyTaxable)}, 국민연금 상한 ${fm(p.NC)}) x ${(p.NP*100).toFixed(2)}% x 12 = ${fm(a.insD.np)}`,
+    hi:`월 과세급여 ${fm(a.monthlyTaxable)} x ${(p.HI*100).toFixed(3)}% x 12 = ${fm(a.insD.hi)}`,
+    lt:`월 과세급여 ${fm(a.monthlyTaxable)} x 건강보험 ${(p.HI*100).toFixed(3)}% x 장기요양 ${(p.LT*100).toFixed(2)}% x 12 = ${fm(a.insD.lt)}`,
+    ins:`국민연금 ${fm(a.insD.np)} + 건강보험 ${fm(a.insD.hi)} + 장기요양 ${fm(a.insD.lt)} = ${fm(a.ins)}`,
+    monthlyTaxable:`월급 ${fm(a.g/12)} - 월 비과세 ${fm(MONTHLY_NONTAXABLE)} = ${fm(a.monthlyTaxable)}`,
+    monthlyIncomeTax:`월 과세급여 ${fm(a.monthlyTaxable)}, 부양가족 ${ff(p.FAM)}명 기준 2026 간이세액표 조회값입니다.`,
+    monthlyLo:`월 소득세 ${fm(a.monthlyIncomeTax)} x 10%를 10원 단위 절사 = ${fm(a.monthlyLo)}`,
+    it:`월 소득세 ${fm(a.monthlyIncomeTax)} x 12 = ${fm(a.it)}`,
+    lo:`월 지방소득세 ${fm(a.monthlyLo)} x 12 = ${fm(a.lo)}`,
+    nS:`총급여 ${fm(a.g)} - 4대보험 ${fm(a.ins)} - 소득세 ${fm(a.it)} - 지방소득세 ${fm(a.lo)} = ${fm(a.nS)}`,
+    sev:`연간 급여 ${fm(a.g)} / 12개월 = ${fm(a.sev)} (1년치 퇴직금 가정)`,
+    sevNet:`퇴직금 ${fm(a.sev)}를 IRP 이체로 가정하여 적립액 ${fm(a.sevNet)} 반영`,
+    employeeNp:`본인 부담 국민연금 min(월 과세급여 ${fm(a.monthlyTaxable)}, 상한 ${fm(p.NC)}) x ${(p.NP*100).toFixed(2)}% x 12 = ${fm(a.employeeNp)}`,
+    employerNp:`사용자 부담 국민연금도 min(월 과세급여 ${fm(a.monthlyTaxable)}, 상한 ${fm(p.NC)}) x ${(p.NP*100).toFixed(2)}% x 12 = ${fm(a.employerNp)}`,
+    cash:`Opt1에서는 현금 실수령 = 급여 실수령 ${fm(a.nS)}`,
+    totalValue:`현금 ${fm(a.cash)} + IRP ${fm(a.irp)} + 본인 부담 국민연금 ${fm(a.employeeNp)} + 사용자 부담 국민연금 ${fm(a.employerNp)} = ${fm(a.totalValue)}`,
+    burden:`4대보험 ${fm(a.ins)} + 소득세 ${fm(a.it)} + 지방소득세 ${fm(a.lo)} = ${fm(a.burden)}`
+  };
+  const bTip={
+    np:`min(월 과세급여 ${fm(b.monthlyTaxable)}, 국민연금 상한 ${fm(p.NC)}) x ${(p.NP*100).toFixed(2)}% x 12 = ${fm(b.insD.np)}`,
+    hi:`월 과세급여 ${fm(b.monthlyTaxable)} x ${(p.HI*100).toFixed(3)}% x 12 = ${fm(b.insD.hi)}`,
+    lt:`월 과세급여 ${fm(b.monthlyTaxable)} x 건강보험 ${(p.HI*100).toFixed(3)}% x 장기요양 ${(p.LT*100).toFixed(2)}% x 12 = ${fm(b.insD.lt)}`,
+    ins:`국민연금 ${fm(b.insD.np)} + 건강보험 ${fm(b.insD.hi)} + 장기요양 ${fm(b.insD.lt)} = ${fm(b.ins)}`,
+    it:`월 소득세 ${fm(b.monthlyIncomeTax)} x 12 = ${fm(b.it)}`,
+    lo:`월 지방소득세 ${fm(b.monthlyLo)} x 12 = ${fm(b.lo)}`,
+    nS:`대표 급여 ${fm(b.sal)} - 4대보험 ${fm(b.ins)} - 소득세 ${fm(b.it)} - 지방소득세 ${fm(b.lo)} = ${fm(b.nS)}`,
+    empNp:`min(월 과세급여 ${fm(b.monthlyTaxable)}, 상한 ${fm(p.NC)}) x ${(p.NP*100).toFixed(2)}% x 12 = ${fm(b.empInsD.np)}`,
+    empHi:`월 과세급여 ${fm(b.monthlyTaxable)} x ${(p.HI*100).toFixed(3)}% x 12 = ${fm(b.empInsD.hi)}`,
+    empLt:`월 과세급여 ${fm(b.monthlyTaxable)} x 건강보험 ${(p.HI*100).toFixed(3)}% x 장기요양 ${(p.LT*100).toFixed(2)}% x 12 = ${fm(b.empInsD.lt)}`,
+    ei:`사용자 국민연금 ${fm(b.empInsD.np)} + 건강보험 ${fm(b.empInsD.hi)} + 장기요양 ${fm(b.empInsD.lt)} = ${fm(b.ei)}`,
+    cp:`총급여 ${fm(GK)} - 대표 급여 ${fm(b.sal)} - 사용자 부담 ${fm(b.ei)} - 퇴직금 ${fm(b.sev)} - 법인 경비 ${fm(b.aE)} = ${fm(b.cp)}`,
+    ctt:`법인세 ${fm(b.ctt/1.1)} + 지방세 ${fm(b.ctt-b.ctt/1.1)} = ${fm(b.ctt)}`,
+    ret:`법인 이익 ${fm(b.cp)} - 법인세+지방세 ${fm(b.ctt)} = ${fm(b.ret)}`,
+    sev:`대표 연봉 ${fm(b.sal)} / 12개월 = ${fm(b.sev)} (1년치 퇴직금 가정)`,
+    sevNet:`대표 퇴직금 ${fm(b.sev)}를 IRP 이체로 가정하여 적립액 ${fm(b.sevNet)} 반영`,
+    divAmt:`사용자가 입력한 배당 지급액입니다. 세후 이익 ${fm(b.ret)} 범위 내에서만 배당됩니다.`,
+    dtt:`배당세 계산 결과입니다. 배당액 ${fm(b.divAmt)}에 대해 ${b.dm} 기준으로 ${fm(b.dtt)}가 차감됩니다.`,
+    nD:`배당액 ${fm(b.divAmt)} - 배당세 ${fm(b.dtt)} = ${fm(b.nD)}`,
+    cash:`급여 실수령 ${fm(b.nS)} + 배당 실수령 ${fm(b.nD)} + 법인 경비 환급효과 ${fm(b.aE)} = ${fm(b.cash)}`,
+    irp:`대표 퇴직금 IRP 적립액 ${fm(b.irp)}`,
+    employeeNp:`대표 본인 부담 국민연금 ${fm(b.employeeNp)}`,
+    employerNp:`대표 사용자 부담 국민연금 ${fm(b.employerNp)}`,
+    kept:`세후 이익 ${fm(b.ret)} - 배당 ${fm(b.divAmt)} = ${fm(b.kept)}`,
+    totalValue:`현금 ${fm(b.cash)} + IRP ${fm(b.irp)} + 본인 부담 국민연금 ${fm(b.employeeNp)} + 사용자 부담 국민연금 ${fm(b.employerNp)} + 유보금 ${fm(b.kept)} = ${fm(b.totalValue)}`,
+    totalBurden:`총세금 ${fm(b.tTax)} + 사용자 부담 ${fm(b.ei)} = ${fm(b.tTax+b.ei)}`
+  };
+  const cTip={
+    repNp:`min(월 과세급여 ${fm(c.monthlyTaxable)}, 국민연금 상한 ${fm(p.NC)}) x ${(p.NP*100).toFixed(2)}% x 12 = ${fm(c.insD.np)}`,
+    repHi:`월 과세급여 ${fm(c.monthlyTaxable)} x ${(p.HI*100).toFixed(3)}% x 12 = ${fm(c.insD.hi)}`,
+    repLt:`월 과세급여 ${fm(c.monthlyTaxable)} x 건강보험 ${(p.HI*100).toFixed(3)}% x 장기요양 ${(p.LT*100).toFixed(2)}% x 12 = ${fm(c.insD.lt)}`,
+    repIns:`국민연금 ${fm(c.insD.np)} + 건강보험 ${fm(c.insD.hi)} + 장기요양 ${fm(c.insD.lt)} = ${fm(c.ins)}`,
+    spouseNp:`min(월 과세급여 ${fm(c.spouseMonthlyTaxable)}, 국민연금 상한 ${fm(p.NC)}) x ${(p.NP*100).toFixed(2)}% x 12 = ${fm(c.spouseInsD.np)}`,
+    spouseHi:`월 과세급여 ${fm(c.spouseMonthlyTaxable)} x ${(p.HI*100).toFixed(3)}% x 12 = ${fm(c.spouseInsD.hi)}`,
+    spouseLt:`월 과세급여 ${fm(c.spouseMonthlyTaxable)} x 건강보험 ${(p.HI*100).toFixed(3)}% x 장기요양 ${(p.LT*100).toFixed(2)}% x 12 = ${fm(c.spouseInsD.lt)}`,
+    spouseIns:`국민연금 ${fm(c.spouseInsD.np)} + 건강보험 ${fm(c.spouseInsD.hi)} + 장기요양 ${fm(c.spouseInsD.lt)} = ${fm(c.spouseIns)}`,
+    repNet:`대표 급여 ${fm(c.sal)} - 4대보험 ${fm(c.ins)} - 소득세 ${fm(c.it)} - 지방소득세 ${fm(c.lo)} = ${fm(c.nS)}`,
+    spouseNet:`배우자 급여 ${fm(c.spouseSal)} - 4대보험 ${fm(c.spouseIns)} - 소득세 ${fm(c.spouseIt)} - 지방소득세 ${fm(c.spouseLo)} = ${fm(c.spouseSalaryNet)}`,
+    repIt:`월 소득세 ${fm(c.monthlyIncomeTax)} x 12 = ${fm(c.it)}`,
+    repLo:`월 지방소득세 ${fm(c.monthlyLo)} x 12 = ${fm(c.lo)}`,
+    spouseIt:`월 소득세 ${fm(c.spouseMonthlyIncomeTax)} x 12 = ${fm(c.spouseIt)}`,
+    spouseLo:`월 지방소득세 ${fm(c.spouseMonthlyLo)} x 12 = ${fm(c.spouseLo)}`,
+    repEmpNp:`min(월 과세급여 ${fm(c.monthlyTaxable)}, 상한 ${fm(p.NC)}) x ${(p.NP*100).toFixed(2)}% x 12 = ${fm(c.empInsD.np)}`,
+    repEmpHi:`월 과세급여 ${fm(c.monthlyTaxable)} x ${(p.HI*100).toFixed(3)}% x 12 = ${fm(c.empInsD.hi)}`,
+    repEmpLt:`월 과세급여 ${fm(c.monthlyTaxable)} x 건강보험 ${(p.HI*100).toFixed(3)}% x 장기요양 ${(p.LT*100).toFixed(2)}% x 12 = ${fm(c.empInsD.lt)}`,
+    spouseEmpNp:`min(월 과세급여 ${fm(c.spouseMonthlyTaxable)}, 상한 ${fm(p.NC)}) x ${(p.NP*100).toFixed(2)}% x 12 = ${fm(c.spouseEmpInsD.np)}`,
+    spouseEmpHi:`월 과세급여 ${fm(c.spouseMonthlyTaxable)} x ${(p.HI*100).toFixed(3)}% x 12 = ${fm(c.spouseEmpInsD.hi)}`,
+    spouseEmpLt:`월 과세급여 ${fm(c.spouseMonthlyTaxable)} x 건강보험 ${(p.HI*100).toFixed(3)}% x 장기요양 ${(p.LT*100).toFixed(2)}% x 12 = ${fm(c.spouseEmpInsD.lt)}`,
+    spouseEe:`월 과세급여 ${fm(c.spouseMonthlyTaxable)} x 고용안정 ${(p.EE*100).toFixed(2)}% x 12 = ${fm(c.spouseEmpInsD.ee)}`,
+    spouseSi:`월 과세급여 ${fm(c.spouseMonthlyTaxable)} x 산재보험 ${(p.ES*100).toFixed(1)}% x 12 = ${fm(c.spouseEmpInsD.si)}`,
+    ei:`대표 사용자 부담 ${fm(c.empInsD.np+c.empInsD.hi+c.empInsD.lt)} + 배우자 사용자 부담 ${fm(c.spouseEmpInsD.total)} = ${fm(c.ei)}`,
+    cp:`총급여 ${fm(GK)} - 대표 급여 ${fm(c.sal)} - 대표 사용자 부담 ${fm(c.empInsD.total)} - 대표 퇴직금 ${fm(c.sev)} - 배우자 급여 ${fm(c.spouseSal)} - 배우자 사용자 부담 ${fm(c.spouseEmpInsD.total)} - 배우자 퇴직금 ${fm(c.spouseSev)} - 법인 경비 ${fm(c.aE)} = ${fm(c.cp)}`,
+    ctt:`법인세 ${fm(c.ctt/1.1)} + 지방세 ${fm(c.ctt-c.ctt/1.1)} = ${fm(c.ctt)}`,
+    ret:`법인 이익 ${fm(c.cp)} - 법인세+지방세 ${fm(c.ctt)} = ${fm(c.ret)}`,
+    repSev:`대표 연봉 ${fm(c.sal)} / 12개월 = ${fm(c.sev)} (1년치 퇴직금 가정)`,
+    spouseSev:`배우자 연봉 ${fm(c.spouseSal)} / 12개월 = ${fm(c.spouseSev)} (1년치 퇴직금 가정)`,
+    repDiv:`총 배당 ${fm(c.divAmt)} x 50% = ${fm(c.repDiv)}`,
+    spouseDiv:`총 배당 ${fm(c.divAmt)} x 50% = ${fm(c.spouseDiv)}`,
+    dtt:`대표 배당세 ${fm(c.repTax)} + 배우자 배당세 ${fm(c.spouseTax)} = ${fm(c.repTax+c.spouseTax)}`,
+    cash:`대표 급여 실수령 ${fm(c.nS)} + 배우자 급여 실수령 ${fm(c.spouseSalaryNet)} + 대표 배당 실수령 ${fm(c.repNet)} + 배우자 배당 실수령 ${fm(c.spouseNet)} + 법인 경비 환급효과 ${fm(c.aE)} = ${fm(c.cash)}`,
+    irp:`대표 IRP ${fm(c.sevNet)} + 배우자 IRP ${fm(c.spouseSevNet)} = ${fm(c.irp)}`,
+    employeeNp:`대표 본인 부담 국민연금 ${fm(c.insD.np)} + 배우자 본인 부담 국민연금 ${fm(c.spouseInsD.np)} = ${fm(c.employeeNp)}`,
+    employerNp:`대표 사용자 국민연금 ${fm(c.empInsD.np)} + 배우자 사용자 국민연금 ${fm(c.spouseEmpInsD.np)} = ${fm(c.employerNp)}`,
+    kept:`세후 이익 ${fm(c.ret)} - 배당 ${fm(c.divAmt)} = ${fm(c.kept)}`,
+    totalValue:`가구 현금 ${fm(c.cash)} + 가구 IRP ${fm(c.irp)} + 본인 부담 국민연금 ${fm(c.employeeNp)} + 사용자 부담 국민연금 ${fm(c.employerNp)} + 유보금 ${fm(c.kept)} = ${fm(c.totalValue)}`,
+    totalBurden:`총세금 ${fm(c.tTax)} + 사용자 부담 ${fm(c.ei)} = ${fm(c.tTax+c.ei)}`
+  };
+  $('divV').textContent=fm(divInput);
+  $('divInfo').textContent='Opt2 최대 '+fm(base.ret)+' / Opt3 최대 '+fm(base3.ret)+' / 공통 입력 가능 최대 '+fm(divMax*1e4)+' / Opt3 미배당 유보 '+fm(Math.max(0,c.ret-divInput));
+
+  const sav3=c.totalValue-a.totalValue;
+  const sav2=b.totalValue-a.totalValue;
+  $('m1').innerHTML=[
+    tip(fm(a.cash),`Opt1 현금 실수령입니다. 총급여에서 보험과 세금을 차감한 값입니다.`),
+    tip(fm(a.irp),`Opt1 퇴직금의 IRP 적립액입니다.`),
+    tip(fm(a.totalNp),`본인 부담 국민연금 ${fm(a.employeeNp)} + 사용자 부담 국민연금 ${fm(a.employerNp)} = ${fm(a.totalNp)}`)
+  ].join(' / ');
+  $('m2').innerHTML=[
+    tip(fm(b.cash),bTip.cash),
+    tip(fm(b.irp),`대표 퇴직금 IRP 적립액입니다.`),
+    tip(fm(b.totalNp),`대표 본인 부담 국민연금 ${fm(b.employeeNp)} + 대표 사용자 부담 국민연금 ${fm(b.employerNp)} = ${fm(b.totalNp)}`),
+    tip(fm(b.kept),`세후 이익 ${fm(b.ret)} - 배당 ${fm(b.divAmt)} = ${fm(b.kept)}`)
+  ].join(' / ');
+  $('m3').innerHTML=[
+    tip(fm(c.cash),cTip.cash),
+    tip(fm(c.irp),`대표 IRP ${fm(c.sevNet)} + 배우자 IRP ${fm(c.spouseSevNet)} = ${fm(c.irp)}`),
+    tip(fm(c.totalNp),`대표 본인 ${fm(c.insD.np)} + 배우자 본인 ${fm(c.spouseInsD.np)} + 대표 사용자 ${fm(c.empInsD.np)} + 배우자 사용자 ${fm(c.spouseEmpInsD.np)} = ${fm(c.totalNp)}`),
+    tip(fm(c.kept),`세후 이익 ${fm(c.ret)} - 배당 ${fm(c.divAmt)} = ${fm(c.kept)}`)
+  ].join(' / ');
+  $('m4').innerHTML=tip((sav3>=0?'+':'')+fm(sav3),`Opt3 총 귀속가치 ${fm(c.totalValue)} - Opt1 총 귀속가치 ${fm(a.totalValue)} = ${(sav3>=0?'+':'')+fm(sav3)}`);
+  $('m4').style.color=sav3>=0?'var(--color-text-success)':'var(--color-text-danger)';
+  $('m5').innerHTML=[
+    `Opt1 ${tip((a.burden/GK*100).toFixed(1)+'%',`${fm(a.burden)} / ${fm(GK)} = ${(a.burden/GK*100).toFixed(1)}%`)}`,
+    `Opt2 ${tip(((b.tTax+b.ei)/GK*100).toFixed(1)+'%',`${fm(b.tTax+b.ei)} / ${fm(GK)} = ${((b.tTax+b.ei)/GK*100).toFixed(1)}%`)}`,
+    `Opt3 ${tip(((c.tTax+c.ei)/GK*100).toFixed(1)+'%',`${fm(c.tTax+c.ei)} / ${fm(GK)} = ${((c.tTax+c.ei)/GK*100).toFixed(1)}%`)}`
+  ].join(' / ');
+
+  const bar=$('savingsBar');
+  if(c.totalValue>=Math.max(a.totalValue,b.totalValue)){
+    bar.className='sb sb-p';
+    bar.textContent='Option 3가 가장 유리: Opt1 대비 '+fm(Math.max(0,sav3))+' 개선';
+  }else if(b.totalValue>=a.totalValue){
+    bar.className='sb sb-p';
+    bar.textContent='Option 2가 가장 유리: Opt1 대비 '+fm(Math.max(0,sav2))+' 개선';
+  }else{
+    bar.className='sb sb-n';
+    bar.textContent='현재 가정에서는 Option 1이 가장 유리';
+  }
+
+  $('d1').innerHTML=`
+    <div class="l sec"><span>── 급여 ──</span></div>
+    <div class="l"><span>총급여</span><span>${fm(a.g)}</span></div>
+    <div class="l"><span>국민연금</span><span>-${tip(fm(a.insD.np),aTip.np)}</span></div>
+    <div class="l"><span>건강보험</span><span>-${tip(fm(a.insD.hi),aTip.hi)}</span></div>
+    <div class="l"><span>장기요양</span><span>-${tip(fm(a.insD.lt),aTip.lt)}</span></div>
+    <div class="l st"><span>4대보험 합계</span><span>-${tip(fm(a.ins),aTip.ins)}</span></div>
+    <div class="l"><span>월 과세급여</span><span>${tip(fm(a.monthlyTaxable),aTip.monthlyTaxable)}</span></div>
+    <div class="l"><span>월 소득세(간이세액표)</span><span>${tip(fm(a.monthlyIncomeTax),aTip.monthlyIncomeTax)}</span></div>
+    <div class="l"><span>월 지방소득세</span><span>${tip(fm(a.monthlyLo),aTip.monthlyLo)}</span></div>
+    <div class="l"><span>소득세</span><span>-${tip(fm(a.it),aTip.it)}</span></div>
+    <div class="l"><span>지방소득세</span><span>-${tip(fm(a.lo),aTip.lo)}</span></div>
+    <div class="l st"><span>급여 실수령</span><span>${tip(fm(a.nS),aTip.nS)}</span></div>
+    <div class="l ss sec"><span>── 퇴직금 ──</span></div>
+    <div class="l"><span>퇴직금(IRP 이체)</span><span>${tip(fm(a.sev),aTip.sev)}</span></div>
+    <div class="l st"><span>IRP 적립액</span><span>${tip(fm(a.sevNet),aTip.sevNet)}</span></div>
+    <div class="l t"><span>현금 실수령</span><span>${tip(fm(a.cash),aTip.cash)}</span></div>
+    <div class="l t"><span>IRP 적립액</span><span>${tip(fm(a.irp),aTip.sevNet)}</span></div>
+    <div class="l t"><span>본인 부담 국민연금</span><span>${tip(fm(a.employeeNp),aTip.employeeNp)}</span></div>
+    <div class="l t"><span>사용자 부담 국민연금</span><span>${tip(fm(a.employerNp),aTip.employerNp)}</span></div>
+    <div class="l t"><span>총 귀속가치</span><span>${tip(fm(a.totalValue),aTip.totalValue)}</span></div>
+    <div class="l t"><span>총 부담</span><span style="color:var(--color-text-danger)">${tip(fm(a.burden),aTip.burden)}</span></div>
+    <div class="l"><span>실효세율</span><span>${tip((a.burden/a.g*100).toFixed(1)+'%',`${fm(a.burden)} / ${fm(a.g)} = ${(a.burden/a.g*100).toFixed(1)}%`)}</span></div>`;
+
+  const dS2=b.divAmt>0?`
+    <div class="l ss sec"><span>── 배당 ──</span></div>
+    <div class="l"><span>배당액</span><span>${tip(fm(b.divAmt),bTip.divAmt)}</span></div>
+    <div class="l"><span>배당세 (${b.dm})</span><span>-${tip(fm(b.dtt),bTip.dtt)}</span></div>
+    <div class="l st"><span>배당 실수령</span><span>${tip(fm(b.nD),bTip.nD)}</span></div>`:'';
+  const kS2=b.kept>0?`
+    <div class="l ss sec"><span>── 유보 ──</span></div>
+    <div class="l"><span>법인 유보금</span><span style="color:var(--color-text-info)">${fm(b.kept)}</span></div>`:'';
+
+  $('d2').innerHTML=`
+    <div class="l sec"><span>── 대표 급여 ──</span></div>
+    <div class="l"><span>대표 급여</span><span>${fm(b.sal)}</span></div>
+    <div class="l"><span>국민연금</span><span>-${tip(fm(b.insD.np),bTip.np)}</span></div>
+    <div class="l"><span>건강보험</span><span>-${tip(fm(b.insD.hi),bTip.hi)}</span></div>
+    <div class="l"><span>장기요양</span><span>-${tip(fm(b.insD.lt),bTip.lt)}</span></div>
+    <div class="l st"><span>4대보험 합계</span><span>-${tip(fm(b.ins),bTip.ins)}</span></div>
+    <div class="l"><span>월 과세급여</span><span>${tip(fm(b.monthlyTaxable),`월급 ${fm(b.sal/12)} - 월 비과세 ${fm(MONTHLY_NONTAXABLE)} = ${fm(b.monthlyTaxable)}`)}</span></div>
+    <div class="l"><span>월 소득세(간이세액표)</span><span>${tip(fm(b.monthlyIncomeTax),`월 과세급여 ${fm(b.monthlyTaxable)}, 부양가족 ${ff(p.FAM)}명 기준 2026 간이세액표 조회값입니다.`)}</span></div>
+    <div class="l"><span>월 지방소득세</span><span>${tip(fm(b.monthlyLo),`월 소득세 ${fm(b.monthlyIncomeTax)} x 10%를 10원 단위 절사 = ${fm(b.monthlyLo)}`)}</span></div>
+    <div class="l"><span>소득세</span><span>-${tip(fm(b.it),bTip.it)}</span></div>
+    <div class="l"><span>지방소득세</span><span>-${tip(fm(b.lo),bTip.lo)}</span></div>
+    <div class="l st"><span>급여 실수령</span><span>${tip(fm(b.nS),bTip.nS)}</span></div>
+    <div class="l ss sec"><span>── 퇴직금 ──</span></div>
+    <div class="l"><span>퇴직금(IRP 이체)</span><span>${tip(fm(b.sev),bTip.sev)}</span></div>
+    <div class="l st"><span>IRP 적립액</span><span>${tip(fm(b.sevNet),bTip.sevNet)}</span></div>
+    <div class="l ss sec"><span>── 법인 비용 ──</span></div>
+    <div class="l"><span>사용자 국민연금</span><span>-${tip(fm(b.empInsD.np),bTip.empNp)}</span></div>
+    <div class="l"><span>사용자 건강보험</span><span>-${tip(fm(b.empInsD.hi),bTip.empHi)}</span></div>
+    <div class="l"><span>사용자 장기요양</span><span>-${tip(fm(b.empInsD.lt),bTip.empLt)}</span></div>
+    <div class="l st"><span>사용자 부담 합계</span><span>-${tip(fm(b.ei),bTip.ei)}</span></div>
+    <div class="l"><span>법인 경비</span><span>-${fm(b.aE)}</span></div>
+    <div class="l ss sec"><span>── 법인세 ──</span></div>
+    <div class="l"><span>법인 이익</span><span>${tip(fm(b.cp),bTip.cp)}</span></div>
+    <div class="l"><span>법인세+지방세</span><span>-${tip(fm(b.ctt),bTip.ctt)}</span></div>
+    <div class="l st"><span>세후 이익</span><span>${tip(fm(b.ret),bTip.ret)}</span></div>
+    ${dS2}${kS2}
+    <div class="l t"><span>현금 실수령</span><span style="color:var(--color-text-success)">${tip(fm(b.cash),bTip.cash)}</span></div>
+    <div class="l t"><span>IRP 적립액</span><span>${tip(fm(b.irp),bTip.irp)}</span></div>
+    <div class="l t"><span>본인 부담 국민연금</span><span>${tip(fm(b.employeeNp),bTip.employeeNp)}</span></div>
+    <div class="l t"><span>사용자 부담 국민연금</span><span>${tip(fm(b.employerNp),bTip.employerNp)}</span></div>
+    <div class="l t"><span>법인 유보금</span><span>${tip(fm(b.kept),bTip.kept)}</span></div>
+    <div class="l t"><span>총 귀속가치</span><span style="color:var(--color-text-success)">${tip(fm(b.totalValue),bTip.totalValue)}</span></div>
+    <div class="l t"><span>총 부담</span><span>${tip(fm(b.tTax+b.ei),bTip.totalBurden)}</span></div>
+    <div class="l"><span>실효세율</span><span>${tip(((b.tTax+b.ei)/GK*100).toFixed(1)+'%',`${fm(b.tTax+b.ei)} / ${fm(GK)} = ${((b.tTax+b.ei)/GK*100).toFixed(1)}%`)}</span></div>`;
+
+  const dS3=c.divAmt>0?`
+    <div class="l ss sec"><span>── 배당 (50:50 분배) ──</span></div>
+    <div class="l"><span>대표 배당</span><span>${tip(fm(c.repDiv),cTip.repDiv)}</span></div>
+    <div class="l"><span>대표 배당세 (${c.repMethod})</span><span>-${tip(fm(c.repTax),`대표 배당 ${fm(c.repDiv)}에 대한 세금 ${fm(c.repTax)}입니다.`)}</span></div>
+    <div class="l st"><span>대표 배당 실수령</span><span>${tip(fm(c.repNet),`대표 배당 ${fm(c.repDiv)} - 대표 배당세 ${fm(c.repTax)} = ${fm(c.repNet)}`)}</span></div>
+    <div class="l"><span>배우자 배당</span><span>${tip(fm(c.spouseDiv),cTip.spouseDiv)}</span></div>
+    <div class="l"><span>배우자 배당세 (${c.spouseMethod})</span><span>-${tip(fm(c.spouseTax),`배우자 배당 ${fm(c.spouseDiv)}에 대한 세금 ${fm(c.spouseTax)}입니다.`)}</span></div>
+    <div class="l st"><span>배우자 배당 실수령</span><span>${tip(fm(c.spouseNet),`배우자 배당 ${fm(c.spouseDiv)} - 배우자 배당세 ${fm(c.spouseTax)} = ${fm(c.spouseNet)}`)}</span></div>`:'';
+  const kS3=c.kept>0?`
+    <div class="l ss sec"><span>── 유보 ──</span></div>
+    <div class="l"><span>법인 유보금</span><span style="color:var(--color-text-info)">${fm(c.kept)}</span></div>`:'';
+
+  $('d3').innerHTML=`
+    <div class="l sec"><span>── 대표 급여 ──</span></div>
+    <div class="l"><span>대표 급여</span><span>${fm(c.sal)}</span></div>
+    <div class="l"><span>국민연금</span><span>-${tip(fm(c.insD.np),cTip.repNp)}</span></div>
+    <div class="l"><span>건강보험</span><span>-${tip(fm(c.insD.hi),cTip.repHi)}</span></div>
+    <div class="l"><span>장기요양</span><span>-${tip(fm(c.insD.lt),cTip.repLt)}</span></div>
+    <div class="l st"><span>4대보험 합계</span><span>-${tip(fm(c.ins),cTip.repIns)}</span></div>
+    <div class="l"><span>월 과세급여</span><span>${tip(fm(c.monthlyTaxable),`월급 ${fm(c.sal/12)} - 월 비과세 ${fm(MONTHLY_NONTAXABLE)} = ${fm(c.monthlyTaxable)}`)}</span></div>
+    <div class="l"><span>월 소득세(간이세액표)</span><span>${tip(fm(c.monthlyIncomeTax),`월 과세급여 ${fm(c.monthlyTaxable)}, 부양가족 ${ff(p.FAM)}명 기준 2026 간이세액표 조회값입니다.`)}</span></div>
+    <div class="l"><span>월 지방소득세</span><span>${tip(fm(c.monthlyLo),`월 소득세 ${fm(c.monthlyIncomeTax)} x 10%를 10원 단위 절사 = ${fm(c.monthlyLo)}`)}</span></div>
+    <div class="l"><span>소득세</span><span>-${tip(fm(c.it),cTip.repIt)}</span></div>
+    <div class="l"><span>지방소득세</span><span>-${tip(fm(c.lo),cTip.repLo)}</span></div>
+    <div class="l st"><span>대표 급여 실수령</span><span>${tip(fm(c.nS),cTip.repNet)}</span></div>
+    <div class="l ss sec"><span>── 퇴직금 ──</span></div>
+    <div class="l"><span>퇴직금(IRP 이체)</span><span>${tip(fm(c.sev),cTip.repSev)}</span></div>
+    <div class="l st"><span>IRP 적립액</span><span>${tip(fm(c.sevNet),`대표 퇴직금 ${fm(c.sev)}를 IRP 이체로 가정하여 적립액 ${fm(c.sevNet)} 반영`)}</span></div>
+    <div class="l ss sec"><span>── 배우자 급여 ──</span></div>
+    <div class="l"><span>배우자 급여</span><span>${fm(c.spouseSal)}</span></div>
+    <div class="l"><span>국민연금</span><span>-${tip(fm(c.spouseInsD.np),cTip.spouseNp)}</span></div>
+    <div class="l"><span>건강보험</span><span>-${tip(fm(c.spouseInsD.hi),cTip.spouseHi)}</span></div>
+    <div class="l"><span>장기요양</span><span>-${tip(fm(c.spouseInsD.lt),cTip.spouseLt)}</span></div>
+    <div class="l st"><span>4대보험 합계</span><span>-${tip(fm(c.spouseIns),cTip.spouseIns)}</span></div>
+    <div class="l"><span>월 과세급여</span><span>${tip(fm(c.spouseMonthlyTaxable),`월급 ${fm(c.spouseSal/12)} - 월 비과세 ${fm(MONTHLY_NONTAXABLE)} = ${fm(c.spouseMonthlyTaxable)}`)}</span></div>
+    <div class="l"><span>월 소득세(간이세액표)</span><span>${tip(fm(c.spouseMonthlyIncomeTax),`월 과세급여 ${fm(c.spouseMonthlyTaxable)}, 부양가족 ${ff(p.FAM)}명 기준 2026 간이세액표 조회값입니다.`)}</span></div>
+    <div class="l"><span>월 지방소득세</span><span>${tip(fm(c.spouseMonthlyLo),`월 소득세 ${fm(c.spouseMonthlyIncomeTax)} x 10%를 10원 단위 절사 = ${fm(c.spouseMonthlyLo)}`)}</span></div>
+    <div class="l"><span>소득세</span><span>-${tip(fm(c.spouseIt),cTip.spouseIt)}</span></div>
+    <div class="l"><span>지방소득세</span><span>-${tip(fm(c.spouseLo),cTip.spouseLo)}</span></div>
+    <div class="l st"><span>급여 실수령</span><span>${tip(fm(c.spouseSalaryNet),cTip.spouseNet)}</span></div>
+    <div class="l ss sec"><span>── 배우자 퇴직금 ──</span></div>
+    <div class="l"><span>퇴직금(IRP 이체)</span><span>${tip(fm(c.spouseSev),cTip.spouseSev)}</span></div>
+    <div class="l st"><span>IRP 적립액</span><span>${tip(fm(c.spouseSevNet),`배우자 퇴직금 ${fm(c.spouseSev)}를 IRP 이체로 가정하여 적립액 ${fm(c.spouseSevNet)} 반영`)}</span></div>
+    <div class="l ss sec"><span>── 법인 비용 ──</span></div>
+    <div class="l"><span>대표 사용자 국민연금</span><span>-${tip(fm(c.empInsD.np),cTip.repEmpNp)}</span></div>
+    <div class="l"><span>대표 사용자 건강보험</span><span>-${tip(fm(c.empInsD.hi),cTip.repEmpHi)}</span></div>
+    <div class="l"><span>대표 사용자 장기요양</span><span>-${tip(fm(c.empInsD.lt),cTip.repEmpLt)}</span></div>
+    <div class="l"><span>배우자 사용자 국민연금</span><span>-${tip(fm(c.spouseEmpInsD.np),cTip.spouseEmpNp)}</span></div>
+    <div class="l"><span>배우자 사용자 건강보험</span><span>-${tip(fm(c.spouseEmpInsD.hi),cTip.spouseEmpHi)}</span></div>
+    <div class="l"><span>배우자 사용자 장기요양</span><span>-${tip(fm(c.spouseEmpInsD.lt),cTip.spouseEmpLt)}</span></div>
+    <div class="l"><span>배우자 고용안정</span><span>-${tip(fm(c.spouseEmpInsD.ee),cTip.spouseEe)}</span></div>
+    <div class="l"><span>배우자 산재보험</span><span>-${tip(fm(c.spouseEmpInsD.si),cTip.spouseSi)}</span></div>
+    <div class="l st"><span>사용자 부담 합계</span><span>-${tip(fm(c.ei),cTip.ei)}</span></div>
+    <div class="l"><span>법인 경비</span><span>-${fm(c.aE)}</span></div>
+    <div class="l ss sec"><span>── 법인세 ──</span></div>
+    <div class="l"><span>법인 이익</span><span>${tip(fm(c.cp),cTip.cp)}</span></div>
+    <div class="l"><span>법인세+지방세</span><span>-${tip(fm(c.ctt),cTip.ctt)}</span></div>
+    <div class="l st"><span>세후 이익</span><span>${tip(fm(c.ret),cTip.ret)}</span></div>
+    ${dS3}${kS3}
+    <div class="l t"><span>가구 현금 실수령</span><span style="color:var(--color-text-success)">${tip(fm(c.cash),cTip.cash)}</span></div>
+    <div class="l t"><span>가구 IRP 적립액</span><span>${tip(fm(c.irp),cTip.irp)}</span></div>
+    <div class="l t"><span>본인 부담 국민연금</span><span>${tip(fm(c.employeeNp),cTip.employeeNp)}</span></div>
+    <div class="l t"><span>사용자 부담 국민연금</span><span>${tip(fm(c.employerNp),cTip.employerNp)}</span></div>
+    <div class="l t"><span>법인 유보금</span><span>${tip(fm(c.kept),cTip.kept)}</span></div>
+    <div class="l t"><span>총 귀속가치</span><span style="color:var(--color-text-success)">${tip(fm(c.totalValue),cTip.totalValue)}</span></div>
+    <div class="l t"><span>총 부담</span><span>${tip(fm(c.tTax+c.ei),cTip.totalBurden)}</span></div>
+    <div class="l"><span>실효세율</span><span>${tip(((c.tTax+c.ei)/GK*100).toFixed(1)+'%',`${fm(c.tTax+c.ei)} / ${fm(GK)} = ${((c.tTax+c.ei)/GK*100).toFixed(1)}%`)}</span></div>`;
+
+  $('noteText').textContent=`적용 가정: 환율 ${ff(p.FX)}원 / 급여 원천징수는 첨부된 2026 근로소득 간이세액표를 사용하며 월 비과세 ${ff(MONTHLY_NONTAXABLE)}원 고정 차감 후 월 과세급여와 부양가족 수 ${ff(p.FAM)}명으로 조회 / 지방소득세는 월 소득세의 10%를 10원 단위 절사 후 연간 합산 / 종합과세 기준 ${ff(p.FT/1e4)}만 / 법인 기존과표 ${ff(p.CB/1e4)}만 / 국민연금 ${(p.NP*100).toFixed(2)}%(상한 ${ff(p.NC/1e4)}만) / 건강 ${(p.HI*100).toFixed(3)}% / 장기요양 ×${(p.LT*100).toFixed(1)}% / 근속연수 ${ff(p.SY)}년 / 퇴직금은 IRP 이체로 가정하여 IRP 적립액 전액을 귀속가치로 반영 / 배우자포함 옵션은 배우자 급여를 일반 근로자 기준으로 계산하고 배당은 대표·배우자에게 50:50 분배하며 배우자의 다른 소득은 없다고 가정`;
+
+  const dk=matchMedia('(prefers-color-scheme:dark)').matches;
+  const C={i:dk?'#85B7EB':'#378ADD',c:dk?'#5DCAA5':'#1D9E75',d:dk?'#F5C4B3':'#D85A30',s:dk?'#B4B2A9':'#888780'};
+  const data={labels:['Option 1','Option 2','Option 3'],datasets:[
+    {label:'소득세+지방세',data:[a.tt,b.pt,c.pt+c.spousePt],backgroundColor:C.i},
+    {label:'법인세',data:[0,b.ctt,c.ctt],backgroundColor:C.c},
+    {label:'배당소득세',data:[0,b.dtt,c.repTax+c.spouseTax],backgroundColor:C.d},
+    {label:'4대보험',data:[a.ins,b.ins,c.ins+c.spouseIns],backgroundColor:C.s}
+  ]};
+  $('leg').innerHTML=data.datasets.map(d=>`<span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:${d.backgroundColor};display:inline-block"></span>${d.label}</span>`).join('');
+  if(ch)ch.destroy();
+  ch=new Chart($('chart'),{type:'bar',data,options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+Math.round(c.raw/1e4).toLocaleString()+'만원'}}},
+    scales:{x:{stacked:true,ticks:{color:dk?'#B4B2A9':'#888780'},grid:{display:false}},
+      y:{stacked:true,ticks:{callback:v=>Math.round(v/1e7)+'천만',color:dk?'#B4B2A9':'#888780'},grid:{color:dk?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.06)'}}}
+  }});
+}
+
+document.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('input',render));
+render();
+</script>
+
+</body>
+</html>
